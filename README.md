@@ -12,3 +12,4 @@ Nc5xb3's tampermonkey scripts
 ## Scripts
 
 - [Picarto](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/picarto)
+- [Youtube](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/youtube)
