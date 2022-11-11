@@ -75,7 +75,7 @@
         };
     }
 
-    function removeRedirect(element) {
+    function removeWarningRedirect(element) {
         element.find('a').each(function(index) {
             var link = $(this);
             if (link.attr('href').startsWith('/site/referrer?go=')) {
@@ -124,10 +124,12 @@
 
                 let el = $(node);
 
-                removeRedirect(el);
+                removeWarningRedirect(el);
 
-                let messages = pullMessageAsText(el).join("\n");
-                console.log(messages);
+                // let messages = pullMessageAsText(el).join("\n");
+                // console.log(messages);
+
+                // @todo maybe do something useful reading chat messages :thinking:
             });
         }
     }
@@ -148,7 +150,7 @@
 
                 if (chatInfo.username !== '') {
                     console.log(chatInfo.username + ': ' + chatInfo.message);
-                    removeRedirect(chatInfo.element);
+                    removeWarningRedirect(chatInfo.element);
                 }
 
                 var thing = chatInfo.element.find('[class*=styled__StandardMessageContainer]');
