@@ -1,16 +1,15 @@
 // ==UserScript==
 // @name         Picarto Helper
-// @namespace    http://tampermonkey.net/
+// @namespace    https://picarto.tv/
 // @version      0.1
 // @description  Beep boop
 // @author       Nc5xb3
-// @match        https://www.picarto.tv/*
 // @match        https://picarto.tv/*
+// @match        https://www.picarto.tv/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=picarto.tv
 // @grant        none
 // @require      https://code.jquery.com/jquery-3.6.1.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js
-
 // ==/UserScript==
 
 /* global $, moment */
