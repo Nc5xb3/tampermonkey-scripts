@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Picarto Helper
+// @name         Nc Picarto Helper
 // @namespace    https://picarto.tv/
 // @version      0.1
 // @description  Beep boop
