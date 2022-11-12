@@ -26,7 +26,9 @@
             var paragraphs = content.find('p');
             paragraphs.each(function (index, element) {
                 var p = $(element);
-                text.push(p.text());
+                var html = '<p>' + p.html() + '</p>';
+                html = html.replace(/\<br\>/g, "\n");
+                text.push($(html).text());
             })
             window.open(gtUrl + encodeURIComponent(text.join("\n")), '_blank');
         } else {
