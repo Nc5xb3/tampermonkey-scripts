@@ -23,12 +23,12 @@
         var content = $('div[nc-content-id=' + id + ']');
         if (content.length) {
             var text = [];
-            var paragraphs = content.find('.status__content__text p');
+            var paragraphs = content.find('p');
             paragraphs.each(function (index, element) {
                 var p = $(element);
                 text.push(p.text());
             })
-            window.open(gtUrl + text.join('%0A'), '_blank');
+            window.open(gtUrl + encodeURIComponent(text.join('%0A')), '_blank');
         } else {
             console.log('div[nc-content-id=' + id + '] not found')
         }
