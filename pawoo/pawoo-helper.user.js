@@ -28,7 +28,7 @@
                 var p = $(element);
                 text.push(p.text());
             })
-            window.open(gtUrl + encodeURIComponent(text.join('%0A')), '_blank');
+            window.open(gtUrl + encodeURIComponent(text.join("\n")), '_blank');
         } else {
             console.log('div[nc-content-id=' + id + '] not found')
         }
