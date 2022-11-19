@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Pawoo Helper
 // @namespace    https://pawoo.net/
-// @version      0.2
+// @version      0.2.1
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
@@ -41,16 +41,17 @@
             var translationButton = $('button[nc-button-id="' + id + '"]');
             var translationBlock = $('div[nc-translation-id="' + id + '"]');
 
-            translationBlock.html('translation...');
+            translationBlock.html('translating...');
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: gtsUrl + message,
                 onload: function (res) {
                     if (res.status === 200) {
-                        var translation = res.responseText;
-                        translationBlock.html(translation)
+                        var translation = res.responseText.replace(/\n/g, '<br>');
+                        translationBlock.html(translation);
                         translationButton.attr('state', 'on').html('Translated from Japanese by Google');
                     } else {
+                        translationBlock.html('translation failed... opening google translation page instead');
                         console.error('Failed to translate. Opening google translate page instead');
                         window.open(gtUrl + message, '_blank');
                         //window.open('https://www.deepl.com/en/translator?share=generic#ja/en/' + encodeURIComponent(text.join("\n")), '_blank');
