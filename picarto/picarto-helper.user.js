@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Picarto Helper
 // @namespace    https://picarto.tv/
-// @version      0.2.0
+// @version      0.2.1
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://picarto.tv/*
@@ -85,6 +85,17 @@
                 clock.html(moment().format('hh:mm:ss A'));
             }, 1000);
         });
+
+        // update links on load to links outside of chat
+        function scanLinks() {
+            $('a[href^="/site/referrer?go="]').each(function(index, event) {
+                removeWarningRedirect($(event));
+            });
+        }
+        setTimeout(function () {
+            //setInterval(scanLinks, 10000);
+            scanLinks();
+        }, 3000);
     });
 
     // listen to chat
@@ -106,12 +117,12 @@
             });
             return texts;
         }
-    
+
         function decipherChat(element) {
             let el = $(element);
-    
+
             let messages = pullMessageAsText(el).join("\n");
-    
+
             return {
                 avatar: el.find('span.ant-avatar img').attr('src'),
                 username: el.find('span[class*=ChannelDisplayName__Name]').text(),
