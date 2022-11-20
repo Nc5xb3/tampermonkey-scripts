@@ -99,8 +99,7 @@
     });
 
     // listen to chat
-    // maybe useful for something but currently just print to console. currently disabled
-    const listenToChat = false;
+    const listenToChat = true;
 
     if (listenToChat) {
         function pullMessageAsText(element) {
@@ -171,6 +170,10 @@
                     let messages = pullMessageAsText(el).join("\n");
                     console.log(messages);
 
+                    el.find('a[href^="/site/referrer?go="]').each(function(index, event) {
+                        removeWarningRedirect($(event));
+                    });
+
                     // @todo maybe do something useful reading chat messages :thinking:
                 });
             }
@@ -192,6 +195,10 @@
 
                     if (chatInfo.username !== '') {
                         console.log(chatInfo.username + ': ' + chatInfo.message);
+
+                        chatInfo.element.find('a[href^="/site/referrer?go="]').each(function(index, event) {
+                            removeWarningRedirect($(event));
+                        });
                     }
 
                     var thing = chatInfo.element.find('[class*=styled__StandardMessageContainer]');
