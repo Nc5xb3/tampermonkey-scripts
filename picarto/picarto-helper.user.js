@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Picarto Helper
 // @namespace    https://picarto.tv/
-// @version      0.2.1
+// @version      0.2.2
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://picarto.tv/*
@@ -69,6 +69,19 @@
             removeWarningRedirect($(event.target.parentElement));
         }
     }, false);
+    document.addEventListener('auxclick', function (event) {
+        // listen to middle clicks
+        if (event.button === 1) {
+            if (event.target.tagName.toLowerCase() === 'a')
+            {
+                removeWarningRedirect($(event.target));
+            }
+            else if (event.target.parentElement.tagName.toLowerCase() === 'a')
+            {
+                removeWarningRedirect($(event.target.parentElement));
+            }
+        }
+    }, false);
 
     // add clock
 
@@ -94,7 +107,7 @@
         }
         setTimeout(function () {
             //setInterval(scanLinks, 10000);
-            scanLinks();
+            //scanLinks();
         }, 3000);
     });
 
