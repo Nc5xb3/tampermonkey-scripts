@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Pawoo Helper
 // @namespace    https://pawoo.net/
-// @version      0.2.1
+// @version      0.2.2
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
@@ -65,6 +65,8 @@
         return true;
     }
 
+    const jpRegex = /[\u3000-\u303F]|[\u3040-\u309F]|[\u30A0-\u30FF]|[\uFF00-\uFFEF]|[\u4E00-\u9FAF]|[\u2605-\u2606]|[\u2190-\u2195]|\u203B/g;
+
     function addGTbuttons() {
         if (!document.hasFocus()) {
             return false;
@@ -76,39 +78,43 @@
             el.addClass('nc-addon');
             // el.css('background-color', 'red');
 
-            el.attr('nc-content-id', ++contentIndex);
+            if (jpRegex.test(el.text())) {
+                el.attr('nc-content-id', ++contentIndex);
 
-            // seems like they disabled onclick functions, so adding listeners..
-            var link = $('<button/>')
-            .attr('nc-button-id', contentIndex)
-            .attr('state', 'off')
-            .html('Translate Toot')
-            .on('click', function() {
-                var id = $(this).attr('nc-button-id');
-                var state = $(this).attr('state');
-                var translationBlock = $('div[nc-translation-id="' + id + '"]');
-                var translation = translationBlock.text();
-                if (state === 'off') {
-                    translationBlock.removeClass('hide');
-                    if (translation.length > 0) {
-                        console.log('show existing translation', id);
-                        $(this).attr('state', 'on').html('Translated from Japanese by Google');
+                // seems like they disabled onclick functions, so adding listeners..
+                var link = $('<button/>')
+                .attr('nc-button-id', contentIndex)
+                .attr('state', 'off')
+                .html('Translate Toot')
+                .on('click', function() {
+                    var id = $(this).attr('nc-button-id');
+                    var state = $(this).attr('state');
+                    var translationBlock = $('div[nc-translation-id="' + id + '"]');
+                    var translation = translationBlock.text();
+                    if (state === 'off') {
+                        translationBlock.removeClass('hide');
+                        if (translation.length > 0) {
+                            console.log('show existing translation', id);
+                            $(this).attr('state', 'on').html('Translated from Japanese by Google');
+                        } else {
+                            console.log('translate', id);
+                            openTranslate(id)
+                        }
                     } else {
-                        console.log('translate', id);
-                        openTranslate(id)
+                        console.log('hide translation', id);
+                        translationBlock.addClass('hide');
+                        $(this).attr('state', 'off').html('Translate Toot');
                     }
-                } else {
-                    console.log('hide translation', id);
-                    translationBlock.addClass('hide');
-                    $(this).attr('state', 'off').html('Translate Toot');
-                }
-            });
-            link.insertAfter(el);
+                });
+                link.insertAfter(el);
 
-            var tlBlock = $('<div/>')
-            .attr('nc-translation-id', contentIndex)
-            .addClass('nc-translation');
-            tlBlock.insertAfter(link);
+                var tlBlock = $('<div/>')
+                .attr('nc-translation-id', contentIndex)
+                .addClass('nc-translation');
+                tlBlock.insertAfter(link);
+            } else {
+                el.addClass('no-jp');
+            }
         })
         if (contents.length) {
             console.log('found ' + contents.length + ' contents');
