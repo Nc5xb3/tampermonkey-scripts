@@ -14,3 +14,4 @@ Nc5xb3's tampermonkey scripts
 - [Picarto](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/picarto)
 - [Pawoo](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/pawoo)
 - [Youtube](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/youtube)
+- [Twitter](https://github.com/Nc5xb3/tampermonkey-scripts/tree/main/twitter)
