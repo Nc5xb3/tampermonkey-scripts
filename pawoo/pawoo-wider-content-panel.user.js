@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Pawoo wide content panel
 // @namespace    https://pawoo.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
@@ -22,12 +22,16 @@
 
     const MAX_WIDTH = GM_getValue('custom_panel_width', 800);
 
-    // Enable advanced web interface: false
-    GM_addStyle(`div.columns-area__panels__main { max-width: ${MAX_WIDTH}px; }`);
-    GM_addStyle(`div.columns-area__panels__main > div.columns-area > div.column { max-width: ${MAX_WIDTH}px; }`);
+    function updateWidth(width) {
+        // Enable advanced web interface: false
+        GM_addStyle(`div.columns-area__panels__main { max-width: ${width}px; }`);
+        GM_addStyle(`div.columns-area__panels__main > div.columns-area > div.column { max-width: ${width}px; }`);
 
-    // Enable advanced web interface: true
-    GM_addStyle(`div.ui > div.columns-area > div.column { width: ${MAX_WIDTH}px; }`);
+        // Enable advanced web interface: true
+        GM_addStyle(`div.ui > div.columns-area > div.column { width: ${width}px; }`);
+    }
+
+    updateWidth(MAX_WIDTH)
 
     // widget css
     GM_addStyle('.nc-panel { display: flex; flex-direction: column; padding: 5px; background-color: #202432; }')
@@ -81,8 +85,12 @@
                                 cursor: 'pointer',
                             })
                             .on('click', function() {
-                                GM_setValue('custom_panel_width', $('#nc-panel-width').val());
+                                const NEW_WIDTH = $('#nc-panel-width').val()
+
+                                GM_setValue('custom_panel_width', NEW_WIDTH)
                                 $('#nc-btn-save').html('saved')
+
+                                updateWidth(NEW_WIDTH)
                             })
                         ])
                     ]).hide()
