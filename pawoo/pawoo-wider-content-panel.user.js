@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         Nc Pawoo wide content panel
 // @namespace    https://pawoo.net/
-// @version      0.0.1
+// @version      0.1.0
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
 // @match        https://www.pawoo.net/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=pawoo.net
 // @grant        GM_addStyle
-// @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @connect      script.google.com
 // @connect      script.googleusercontent.com
 // @require      https://code.jquery.com/jquery-3.6.1.min.js
@@ -19,13 +20,75 @@
 (function() {
     'use strict';
 
-    const MAX_WIDTH = 800;
+    const MAX_WIDTH = GM_getValue('custom_panel_width', 800);
 
     // Enable advanced web interface: false
-    GM_addStyle(`div.columns-area__panels__main { width: ${MAX_WIDTH}px; max-width: ${MAX_WIDTH}px; }`);
+    GM_addStyle(`div.columns-area__panels__main { max-width: ${MAX_WIDTH}px; }`);
     GM_addStyle(`div.columns-area__panels__main > div.columns-area > div.column { max-width: ${MAX_WIDTH}px; }`);
 
     // Enable advanced web interface: true
     GM_addStyle(`div.ui > div.columns-area > div.column { width: ${MAX_WIDTH}px; }`);
+
+    // widget css
+    GM_addStyle('.nc-panel { display: flex; flex-direction: column; padding: 5px; background-color: #202432; }')
+    GM_addStyle('.nc-button { padding: 1px 5px; background-color: #32394e; }')
+    GM_addStyle('.nc-mt { margin-top: 4px; }')
+
+    $(document).ready(function() {
+        let widget = $('<div/>')
+            .css({
+                'z-index': '9999',
+                position: 'fixed',
+                top: '5px',
+                right: '8px',
+                color: '#FFF',
+                'text-align': 'right',
+            })
+            .html([
+                $('<div/>')
+                .html([
+                    $('<div/>').attr('title', 'nc customize').css({ color: '#53596c' }).html(
+                        $('<i/>').addClass('fa fa-cog')
+                    )
+                    .css({
+                        'user-select': 'none',
+                        cursor: 'pointer',
+                    })
+                    .on('click', function () {
+                        $('#nc-pawoo-panel').toggle()
+                    }),
+                    $('<div/>').attr('id', 'nc-pawoo-panel').addClass('nc-panel').html([
+                        $('<b/>').html('Panel content width'),
+                        $('<div/>').addClass('nc-mt')
+                        .css({
+                            display: 'flex',
+                        })
+                        .html([
+                            $('<input/>').attr('id', 'nc-panel-width').attr('type', 'number').val(MAX_WIDTH),
+                            $('<span/>').css({ 'padding-left': '4px' }).html('px')
+                        ]),
+                        $('<div/>').
+                        css({
+                            display: 'flex',
+                            'flex-direction': 'row-reverse',
+                        })
+                        .html([
+                            $('<div/>').attr('id', 'nc-btn-save').addClass('nc-mt nc-button').html('save')
+                            .css({
+                                'user-select': 'none',
+                                cursor: 'pointer',
+                            })
+                            .on('click', function() {
+                                GM_setValue('custom_panel_width', $('#nc-panel-width').val());
+                                $('#nc-btn-save').html('saved')
+                            })
+                        ])
+                    ]).hide()
+                ])
+            ])
+
+        $('body').append(widget)
+        console.log('added widget')
+    })
 
 })();
