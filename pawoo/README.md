@@ -6,4 +6,5 @@
 
 ## [pawoo-wider-content-panel.user.js](https://github.com/Nc5xb3/tampermonkey-scripts/raw/main/pawoo/pawoo-wider-content-panel.user.js)
 
-- Widen content panel
+- Widen content panel to 800px
+- Added customize overlay button at top right

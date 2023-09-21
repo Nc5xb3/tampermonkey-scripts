@@ -42,12 +42,14 @@
                 top: '5px',
                 right: '8px',
                 color: '#FFF',
-                'text-align': 'right',
             })
             .html([
                 $('<div/>')
                 .html([
-                    $('<div/>').attr('title', 'nc customize').css({ color: '#53596c' }).html(
+                    $('<div/>').attr('title', 'nc customize').css({
+                        color: '#53596c',
+                        'text-align': 'right',
+                    }).html(
                         $('<i/>').addClass('fa fa-cog')
                     )
                     .css({
