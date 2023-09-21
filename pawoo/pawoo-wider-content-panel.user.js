@@ -10,8 +10,6 @@
 // @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @connect      script.google.com
-// @connect      script.googleusercontent.com
 // @require      https://code.jquery.com/jquery-3.6.1.min.js
 // ==/UserScript==
 
