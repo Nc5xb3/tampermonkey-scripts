@@ -8,3 +8,4 @@
 
 - Widen main content panel (default: 800px)
 - Added customize overlay button at top right
+- Added option to contain image on hover
