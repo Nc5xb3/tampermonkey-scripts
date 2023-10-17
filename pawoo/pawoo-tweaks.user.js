@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Pawoo tweaks
 // @namespace    https://pawoo.net/
-// @version      0.1.3
+// @version      0.1.4
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
@@ -31,18 +31,8 @@
         GM_addStyle(`div.ui > div.columns-area > div.column { width: ${width}px; }`);
     }
     function zoomImage(e) {
-        var target = e.currentTarget;
-        var offsetX, offsetY, x, y;
-
-        e.offsetX ? offsetX = e.offsetX : offsetX = e.touches[0].pageX
-        e.offsetY ? offsetY = e.offsetY : offsetX = e.touches[0].pageX
-
-        x = offsetX / target.offsetWidth*100
-        y = offsetY / target.offsetHeight*100
-
-        target.style.setProperty('--x', x + '%')
-        target.style.setProperty('--y', y + '%')
-        //target.style.setProperty('object-position', null)
+        e.target.style.setProperty('--x', (100 * e.offsetX / e.target.offsetWidth) + '%');
+        e.target.style.setProperty('--y', (100 * e.offsetY / e.target.offsetHeight) + '%');
     }
 
     function updateConfig(customWidth, showFullImage, zoomOnHover) {
