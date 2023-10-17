@@ -40,29 +40,33 @@
         x = offsetX / target.offsetWidth*100
         y = offsetY / target.offsetHeight*100
 
-        target.style.objectPosition = x + '% ' + y + '%';
-    }
-    function zoomImageLeave(e) {
-        var target = e.currentTarget;
-        target.style.objectPosition = '50% 50%';
+        target.style.setProperty('--x', x + '%')
+        target.style.setProperty('--y', y + '%')
+        //target.style.setProperty('object-position', null)
     }
 
     function updateConfig(customWidth, showFullImage, zoomOnHover) {
         updateWidth(customWidth)
 
+        let extraCss = '';
+        if (zoomOnHover) {
+            extraCss = '--x: 50%; --y: 50%;';
+            extraCss += 'transform: scale(var(--zoom));';
+            extraCss += 'transform-origin: var(--x) var(--y);';
+            extraCss += 'clip-path: inset( calc((1 - 1/var(--zoom)) * (var(--y))) calc((1 - 1/var(--zoom)) * (100% - var(--x))) calc((1 - 1/var(--zoom)) * (100% - var(--y))) calc((1 - 1/var(--zoom)) * (var(--x))) );';
+        }
+
         if (showFullImage) {
-            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: contain; object-fit: contain; background-color: rgba(0, 0, 0, .5); }')
+            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: contain; object-fit: contain; background-color: rgba(0, 0, 0, .5); ' + extraCss + ' }')
         } else {
-            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: cover; object-fit: cover; }')
+            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: cover; object-fit: cover; ' + extraCss + ' }')
         }
 
         if (zoomOnHover) {
             $(document).on('mousemove', '.media-gallery__item-thumbnail img', zoomImage)
-            $(document).on('mouseleave', '.media-gallery__item-thumbnail img', zoomImageLeave)
-            GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: cover; object-fit: cover; background-color: rgba(0, 0, 0, .5); }')
+            GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { --zoom: 3; background-color: rgba(0, 0, 0, .5); }')
         } else {
             $(document).off('mousemove', '.media-gallery__item-thumbnail img')
-            $(document).off('mouseleave', '.media-gallery__item-thumbnail img')
 
             // reflect showFullImage above
             if (showFullImage) {
