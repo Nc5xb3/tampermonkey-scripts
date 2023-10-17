@@ -85,7 +85,7 @@
                 var link = $('<button/>')
                 .attr('nc-button-id', contentIndex)
                 .attr('state', 'off')
-                .html('Translate Toot')
+                .html('Translate Post')
                 .on('click', function() {
                     var id = $(this).attr('nc-button-id');
                     var state = $(this).attr('state');
@@ -103,7 +103,7 @@
                     } else {
                         console.log('hide translation', id);
                         translationBlock.addClass('hide');
-                        $(this).attr('state', 'off').html('Translate Toot');
+                        $(this).attr('state', 'off').html('Translate Post');
                     }
                 });
                 link.insertAfter(el);

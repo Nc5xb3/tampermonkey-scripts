@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Nc Pawoo wide content panel
+// @name         Nc Pawoo tweaks
 // @namespace    https://pawoo.net/
-// @version      0.1.2
+// @version      0.1.3
 // @description  Beep boop
 // @author       Nc5xb3
 // @match        https://pawoo.net/*
@@ -19,7 +19,8 @@
     'use strict';
 
     const MAX_WIDTH = GM_getValue('custom_panel_width', 800);
-    const CONTAIN_IMAGE_ON_HOVER = GM_getValue('contain_image_on_hover', false);
+    const SHOW_FULL_IMAGE = GM_getValue('show_full_image', false);
+    const ZOOM_IMAGE_ON_HOVER = GM_getValue('zoom_image_on_hover', false);
 
     function updateWidth(width) {
         // Enable advanced web interface: false
@@ -29,17 +30,50 @@
         // Enable advanced web interface: true
         GM_addStyle(`div.ui > div.columns-area > div.column { width: ${width}px; }`);
     }
-    function setContainImageOnHover(bool) {
-        console.log(bool)
-        if (bool) {
-            GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: contain; object-fit: contain; background-color: rgba(0, 0, 0, .5) }')
+    function zoomImage(e) {
+        var target = e.currentTarget;
+        var offsetX, offsetY, x, y;
+
+        e.offsetX ? offsetX = e.offsetX : offsetX = e.touches[0].pageX
+        e.offsetY ? offsetY = e.offsetY : offsetX = e.touches[0].pageX
+
+        x = offsetX / target.offsetWidth*100
+        y = offsetY / target.offsetHeight*100
+
+        target.style.objectPosition = x + '% ' + y + '%';
+    }
+    function zoomImageLeave(e) {
+        var target = e.currentTarget;
+        target.style.objectPosition = '50% 50%';
+    }
+
+    function updateConfig(customWidth, showFullImage, zoomOnHover) {
+        updateWidth(customWidth)
+
+        if (showFullImage) {
+            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: contain; object-fit: contain; background-color: rgba(0, 0, 0, .5); }')
         } else {
-            GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: cover; object-fit: cover; }')
+            GM_addStyle('.media-gallery__item-thumbnail img, .media-gallery__preview { -o-object-fit: cover; object-fit: cover; }')
+        }
+
+        if (zoomOnHover) {
+            $(document).on('mousemove', '.media-gallery__item-thumbnail img', zoomImage)
+            $(document).on('mouseleave', '.media-gallery__item-thumbnail img', zoomImageLeave)
+            GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: cover; object-fit: cover; background-color: rgba(0, 0, 0, .5); }')
+        } else {
+            $(document).off('mousemove', '.media-gallery__item-thumbnail img')
+            $(document).off('mouseleave', '.media-gallery__item-thumbnail img')
+
+            // reflect showFullImage above
+            if (showFullImage) {
+                GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: contain; object-fit: contain; background-color: rgba(0, 0, 0, .5); }')
+            } else {
+                GM_addStyle('.media-gallery__item-thumbnail img:hover, .media-gallery__preview:hover { -o-object-fit: cover; object-fit: cover; }')
+            }
         }
     }
 
-    updateWidth(MAX_WIDTH)
-    setContainImageOnHover(CONTAIN_IMAGE_ON_HOVER)
+    updateConfig(MAX_WIDTH, SHOW_FULL_IMAGE, ZOOM_IMAGE_ON_HOVER)
 
     // widget css
     GM_addStyle('.nc-panel { display: flex; flex-direction: column; padding: 5px; background-color: #202432; }')
@@ -88,8 +122,17 @@
                             display: 'flex',
                         })
                         .html([
-                            $('<input/>').attr('id', 'nc-contain-image-on-hover').attr('type', 'checkbox').prop('checked', CONTAIN_IMAGE_ON_HOVER),
-                            $('<label/>').css({ 'padding-left': '4px' }).attr('for', 'nc-contain-image-on-hover').html('show full image on hover')
+                            $('<input/>').attr('id', 'nc-show-full-image').attr('type', 'checkbox').prop('checked', SHOW_FULL_IMAGE),
+                            $('<label/>').css({ 'padding-left': '4px' }).attr('for', 'nc-show-full-image').html('display full image')
+                        ]),
+
+                        $('<div/>').addClass('nc-mt')
+                        .css({
+                            display: 'flex',
+                        })
+                        .html([
+                            $('<input/>').attr('id', 'nc-zoom-image-on-hover').attr('type', 'checkbox').prop('checked', ZOOM_IMAGE_ON_HOVER),
+                            $('<label/>').css({ 'padding-left': '4px' }).attr('for', 'nc-zoom-image-on-hover').html('zoom image on hover')
                         ]),
 
                         $('<div/>').addClass('nc-mt')
@@ -105,18 +148,20 @@
                             })
                             .on('click', function() {
                                 const NEW_WIDTH = $('#nc-panel-width').val()
-                                const NEW_SHOW_FULL_IMAGE_ON_HOVER = $('#nc-contain-image-on-hover').is(':checked')
+                                const NEW_SHOW_FULL_IMAGE = $('#nc-show-full-image').is(':checked')
+                                const NEW_ZOOM_IMAGE_ON_HOVER = $('#nc-zoom-image-on-hover').is(':checked')
 
                                 GM_setValue('custom_panel_width', NEW_WIDTH)
-                                GM_setValue('contain_image_on_hover', NEW_SHOW_FULL_IMAGE_ON_HOVER)
+                                GM_setValue('show_full_image', NEW_SHOW_FULL_IMAGE)
+                                GM_setValue('zoom_image_on_hover', NEW_ZOOM_IMAGE_ON_HOVER)
 
                                 $('#nc-btn-message').html('saved')
                                 setTimeout(function () {
                                     $('#nc-btn-message').html('')
                                 }, 1000)
 
-                                updateWidth(NEW_WIDTH)
-                                setContainImageOnHover(NEW_SHOW_FULL_IMAGE_ON_HOVER)
+                                updateConfig(NEW_WIDTH, NEW_SHOW_FULL_IMAGE, NEW_ZOOM_IMAGE_ON_HOVER)
+
                             }),
                             $('<span/>').attr('id', 'nc-btn-message').css({ 'padding-right': '4px', 'font-size': '90%' }),
                         ])
