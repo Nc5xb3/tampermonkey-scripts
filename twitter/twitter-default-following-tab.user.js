@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Twitter auto-switch to following tab
 // @namespace    https://twitter.com/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://twitter.com/*
+// @match        https://x.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=twitter.com
 // @grant        none
 // @require      https://code.jquery.com/jquery-3.6.1.min.js
@@ -77,5 +78,8 @@
             }
         });
 
+        setInterval(function() {
+            $('li div[role="button"] span:contains("Show")').click()
+        }, 5000);
     });
 })();
