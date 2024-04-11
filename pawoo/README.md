@@ -3,6 +3,10 @@
 ## [pawoo-helper.user.js](https://github.com/Nc5xb3/tampermonkey-scripts/raw/main/pawoo/pawoo-helper.user.js)
 
 - Add button on each toot to open google translate
+  
+## [pawoo-helper-jp.user.js](https://github.com/Nc5xb3/tampermonkey-scripts/raw/main/pawoo/pawoo-helper-jp.user.js)
+
+- Japanese to English version
 
 ## [pawoo-tweaks.user.js](https://github.com/Nc5xb3/tampermonkey-scripts/raw/main/pawoo/pawoo-tweaks.user.js)
 
