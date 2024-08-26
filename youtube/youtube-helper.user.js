@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      2024-08-26
+// @version      2024-08-26b
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://www.youtube.com/*
@@ -26,7 +26,6 @@
             GM_setValue('yla_seen', table_seen.data);
         }
     }
-    table_seen.data = {}
 
     function logger(message, css) {
         const prefix = '[YLA' + (view.iframe ? '-iframe' : '') + ']'
