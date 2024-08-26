@@ -73,7 +73,7 @@
         }
         ageChatInterval = setInterval(function() {
             // only when not focused
-            if (!view.document.hasFocus()) {
+            if (view.document && !view.document.hasFocus()) {
                 for (let index = 0; index < opacities.length - 1; index++) {
                     const a = opacities[index];
                     const b = opacities[index + 1];
