@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Nc Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      2024-08-26b
+// @version      2024-08-27
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://www.youtube.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
+// @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addStyle
@@ -14,6 +15,9 @@
 (function() {
     'use strict';
 
+    const gtsUrl = 'https://script.google.com/macros/s/AKfycbwu1fQ7xNENwU2sa9aTWPSX4gNo6haowdMhzTQhX3eZ8c8Od5KMDe2ddQKH_cjQ3hyS/exec?source=ja&target=en&text=';
+
+    let translate = false
     let running = false
     let view = {
         iframe: false,
@@ -155,11 +159,34 @@
         }
     }
 
+    const containsJapanese = function(string) {
+        const regex = /[\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/g
+        return string.match(regex)
+    }
+
     const processObject = function(obj) {
         if (obj.type == 'text') {
             obj.node.classList.add('opacity-100')
 
             const author = obj.author
+            const message = obj.message
+            if (translate && containsJapanese(message)) {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: gtsUrl + message,
+                    onload: function (res) {
+                        if (res.status === 200) {
+                            var translation = res.responseText.replace(/\n/g, '<br>');
+
+                            let translationElement = view.document.createElement('span')
+                            translationElement.setAttribute('style', 'display: block; font-size: 90%; color: #AAD;')
+                            translationElement.textContent = translation
+                            obj.node.querySelector('span#message').appendChild(translationElement)
+                        }
+                    }
+                });
+            }
+
             const added = addSeen(author)
             if (added) {
                 obj.node.querySelector('span#author-name').classList.add('yla-new')
@@ -226,6 +253,11 @@
                         let names = Object.keys(table_seen.data);
                         alert(names.join("\r\n"));
                         return;
+                    }
+                    if (ev.altKey) {
+                        if (!translate && confirm('turn on translation?')) {
+                            translate = true
+                        }
                     }
                 })
 
