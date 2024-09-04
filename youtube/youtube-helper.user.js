@@ -132,6 +132,7 @@
     // Create Mutation Observer - https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
 
     const decipherChat = function(node) {
+        console.log(node.tagName)
         if (node.tagName == 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER') {
             return {
                 type: 'text',
@@ -339,6 +340,13 @@
                     setTimeout(function() {
                         message.remove();
                     }, 3000);
+
+                    // auto remove annoying message
+                    view.document.querySelectorAll('yt-live-chat-viewer-engagement-message-renderer').forEach(function(node) {
+                        if (node.textContent.includes('Welcome to live chat!')) {
+                            node.remove()
+                        }
+                    });
                 }
             }, 1000)
         } else {
@@ -359,7 +367,7 @@
     // load will occur in iframe and therefore applyStyles should guarantee scope
     window.addEventListener('load', function () {
         //logger('1/5 load detected! Running init')
-        //setTimeout(initYLA, 100)
+        setTimeout(initYLA, 100)
         applyStyles()
     })
 
