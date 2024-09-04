@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      2024-08-27
+// @version      2024-09-04
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://www.youtube.com/*
@@ -17,8 +17,9 @@
 
     const gtsUrl = 'https://script.google.com/macros/s/AKfycbwu1fQ7xNENwU2sa9aTWPSX4gNo6haowdMhzTQhX3eZ8c8Od5KMDe2ddQKH_cjQ3hyS/exec?source=ja&target=en&text=';
 
-    let translate = false
     let running = false
+    let translate = false
+
     let view = {
         iframe: false,
         document: null
@@ -55,7 +56,7 @@
     const applyStyles = function() {
         // add styling
         //GM_addStyle('div#yla-mod { font-size: 12px; display: grid; text-align: center; padding: 0 10px; cursor: pointer; }');
-        //GM_addStyle('div#yla-state { font-size: 6px; }');
+        GM_addStyle('div#yla-mod.tl-on { color: #AAD; }');
 
         GM_addStyle('.yla-new { color: red !important; }')
 
@@ -63,7 +64,8 @@
         GM_addStyle('span#author-name { position:relative;top:2px; }')
         GM_addStyle('yt-live-chat-text-message-renderer.yt-live-chat-item-list-renderer:hover { background-color:#444;opacity:100% !important; }')
         GM_addStyle('yt-live-chat-text-message-renderer.yt-live-chat-item-list-renderer { transition-property:opacity;transition-duration: .5s; }')
-        let opacities = [ 100, 95, 85, 70, 50, 20 ].sort((a, b) => a - b);
+
+        let opacities = [ 100, 95, 85, 70, 50, 30 ].sort((a, b) => a - b);
         let opacityCss = '';
         opacities.forEach(function(opac) {
             opacityCss += '.opacity-' + opac + '{opacity:' + opac + '%;}';
@@ -170,15 +172,16 @@
 
             const author = obj.author
             const message = obj.message
-            if (translate && containsJapanese(message)) {
+            if (translate && containsJapanese(message) && !obj.node.querySelector('span.nc-tl')) {
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: gtsUrl + message,
                     onload: function (res) {
-                        if (res.status === 200) {
+                        if (res.status === 200 && translate && !obj.node.querySelector('span.nc-tl')) {
                             var translation = res.responseText.replace(/\n/g, '<br>');
 
                             let translationElement = view.document.createElement('span')
+                            translationElement.classList.add('nc-tl')
                             translationElement.setAttribute('style', 'display: block; font-size: 90%; color: #AAD;')
                             translationElement.textContent = translation
                             obj.node.querySelector('span#message').appendChild(translationElement)
@@ -187,9 +190,11 @@
                 });
             }
 
-            const added = addSeen(author)
-            if (added) {
-                obj.node.querySelector('span#author-name').classList.add('yla-new')
+            if (running) {
+                const added = addSeen(author)
+                if (added) {
+                    obj.node.querySelector('span#author-name').classList.add('yla-new')
+                }
             }
         }
     }
@@ -241,6 +246,13 @@
                 customButton.setAttribute('style', 'font-size: 14px; display: grid; text-align: center; padding: 0 10px; cursor: pointer;')
                 customButton.setAttribute('location', view.iframe ? 'iframe' : 'popup')
                 customButton.textContent = 'MOD'
+
+                let stateElement = view.document.createElement('span')
+                stateElement.setAttribute('id', 'yla-state')
+                stateElement.setAttribute('style', 'font-size: 11px;')
+                stateElement.textContent = 'off'
+                customButton.appendChild(stateElement)
+
                 customButton.addEventListener('click', function (ev) {
                     // if held ctrl, ask if clear
                     if (ev.ctrlKey) {
@@ -248,24 +260,44 @@
                             clearYLA();
                         }
                         return;
-                    }
-                    if (ev.shiftKey) {
+                    } else if (ev.shiftKey) {
                         let names = Object.keys(table_seen.data);
                         alert(names.join("\r\n"));
                         return;
-                    }
-                    if (ev.altKey) {
-                        if (!translate && confirm('turn on translation?')) {
-                            translate = true
+                    } else {
+                        running = !running
+                        stateElement.textContent = running ? 'on' : 'off'
+                        if (running) {
+                            let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
+                            if (chat) {
+                                chat.querySelectorAll('yt-live-chat-text-message-renderer').forEach(function(node) {
+                                    const chatInfo = decipherChat(node);
+                                    processObject(chatInfo);
+                                });
+                            }
                         }
                     }
                 })
+                customButton.addEventListener('contextmenu', function (ev) {
+                    translate = !translate
+                    if (translate) {
+                        customButton.classList.add('tl-on')
 
-                let stateElement = view.document.createElement('span')
-                stateElement.setAttribute('id', 'yla-state')
-                stateElement.setAttribute('style', 'font-size: 11px;')
-                stateElement.textContent = 'off'
-                customButton.appendChild(stateElement)
+                        let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
+                        if (chat) {
+                            chat.querySelectorAll('yt-live-chat-text-message-renderer').forEach(function(node) {
+                                const chatInfo = decipherChat(node);
+                                processObject(chatInfo);
+                            });
+                        }
+                    } else {
+                        customButton.classList.remove('tl-on')
+                        view.document.querySelectorAll('span.nc-tl').forEach(function(node) {
+                            node.remove()
+                        });
+                    }
+                    ev.preventDefault()
+                })
 
                 // https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentElement
                 chatHeader.querySelector('div#action-buttons').insertAdjacentElement('afterend', customButton)
@@ -307,8 +339,6 @@
                     setTimeout(function() {
                         message.remove();
                     }, 3000);
-
-                    view.document.querySelector('span#yla-state').textContent = 'on'
                 }
             }, 1000)
         } else {
@@ -323,6 +353,7 @@
         logger('1/5 yt-navigate-finish detected! Running init')
         attempts = 10
         setTimeout(initYLA, 100)
+        applyStyles()
     })
 
     // load will occur in iframe and therefore applyStyles should guarantee scope
