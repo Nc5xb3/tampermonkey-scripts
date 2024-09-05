@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-04
+// @version      2024-09-05
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://www.youtube.com/*
@@ -132,7 +132,6 @@
     // Create Mutation Observer - https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
 
     const decipherChat = function(node) {
-        console.log(node.tagName)
         if (node.tagName == 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER') {
             return {
                 type: 'text',
@@ -329,6 +328,10 @@
                         const chatInfo = decipherChat(node);
 
                         processObject(chatInfo);
+                    });
+
+                    view.document.querySelectorAll('div#yla-message').forEach(function(node) {
+                        node.remove()
                     });
 
                     let message = view.document.createElement('div')
