@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nc Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      2025-11-18
+// @version      2025-11-18a
 // @description  try to take over the world!
 // @author       Nc5xb3
 // @match        https://www.youtube.com/*
@@ -65,7 +65,19 @@
         // Style for custom menu
         GM_addStyle('#yla-custom-menu { font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif; font-size: 14px; }');
         GM_addStyle('#yla-custom-menu span { user-select: none; }');
-        GM_addStyle('#yla-seen-status, #yla-translate-status, #yla-divider-status { color: #3ea6ff; font-weight: 500; }');
+        GM_addStyle('.yla-status-indicator { color: #3ea6ff; font-weight: 500; }');
+
+        // Modal styles
+        GM_addStyle('#yla-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 20000; display: flex; align-items: center; justify-content: center; }')
+        GM_addStyle('#yla-modal { background: #282828; border-radius: 12px; padding: 24px; min-width: 300px; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); color: #fff; font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif; }')
+        GM_addStyle('#yla-modal-title { font-size: 18px; font-weight: 500; margin-bottom: 16px; color: #fff; }')
+        GM_addStyle('#yla-modal-message { font-size: 14px; margin-bottom: 20px; color: #e0e0e0; line-height: 1.5; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }')
+        GM_addStyle('#yla-modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }')
+        GM_addStyle('#yla-modal-button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }')
+        GM_addStyle('#yla-modal-button.primary { background: #3ea6ff; color: #fff; }')
+        GM_addStyle('#yla-modal-button.primary:hover { background: #2d8ce8; }')
+        GM_addStyle('#yla-modal-button.secondary { background: #3f3f3f; color: #fff; }')
+        GM_addStyle('#yla-modal-button.secondary:hover { background: #4a4a4a; }')
 
         // Style for active YLA button indicator
         GM_addStyle('yt-button-shape#yla-menu-button.yla-active button { background-color: rgba(62, 166, 255, 0.2) !important; position: relative; }');
@@ -85,7 +97,7 @@
         GM_addStyle('#yla-chat-divider::after { content: ""; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; background: #3ea6ff; border-radius: 0 0 4px 4px; }')
         GM_addStyle('.yla-message-above-divider { opacity: 0.3 !important; }')
         GM_addStyle('.yla-message-below-divider { opacity: 1 !important; }')
-        
+
         // Dot button to move divider to bottom
         GM_addStyle('#yla-divider-bottom-button { position: fixed; bottom: 10px; left: 10px; width: 12px; height: 12px; background: #3ea6ff; border-radius: 50%; cursor: pointer; z-index: 10001; opacity: 0.6; transition: all 0.2s; border: none; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }')
         GM_addStyle('#yla-divider-bottom-button:hover { opacity: 1; transform: scale(1.2); box-shadow: 0 2px 8px rgba(62, 166, 255, 0.5); }')
@@ -113,11 +125,86 @@
         }, dur);
     }
 
+    const showModal = function(title, message, buttons) {
+        // Remove existing modal if any
+        const existingModal = view.document.querySelector('#yla-modal-overlay');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const overlay = view.document.createElement('div');
+        overlay.setAttribute('id', 'yla-modal-overlay');
+        
+        const modal = view.document.createElement('div');
+        modal.setAttribute('id', 'yla-modal');
+        
+        const titleEl = view.document.createElement('div');
+        titleEl.setAttribute('id', 'yla-modal-title');
+        titleEl.textContent = title;
+        
+        const messageEl = view.document.createElement('div');
+        messageEl.setAttribute('id', 'yla-modal-message');
+        messageEl.textContent = message;
+        
+        const buttonsEl = view.document.createElement('div');
+        buttonsEl.setAttribute('id', 'yla-modal-buttons');
+        
+        buttons.forEach(function(button) {
+            const btn = view.document.createElement('button');
+            btn.setAttribute('id', 'yla-modal-button');
+            btn.className = button.primary ? 'primary' : 'secondary';
+            btn.textContent = button.text;
+            btn.addEventListener('click', function() {
+                if (button.onClick) {
+                    button.onClick();
+                }
+                overlay.remove();
+            });
+            buttonsEl.appendChild(btn);
+        });
+        
+        modal.appendChild(titleEl);
+        modal.appendChild(messageEl);
+        modal.appendChild(buttonsEl);
+        overlay.appendChild(modal);
+        
+        // Close on overlay click
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        });
+        
+        // Close on Escape key
+        const escapeHandler = function(e) {
+            if (e.key === 'Escape') {
+                overlay.remove();
+                view.document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        view.document.addEventListener('keydown', escapeHandler);
+        
+        view.document.body.appendChild(overlay);
+    }
+
+    const showAlert = function(message, title = 'Notification') {
+        showModal(title, message, [
+            { text: 'OK', primary: true }
+        ]);
+    }
+
+    const showConfirm = function(message, title = 'Confirm', onConfirm, onCancel) {
+        showModal(title, message, [
+            { text: 'Cancel', primary: false, onClick: onCancel },
+            { text: 'OK', primary: true, onClick: onConfirm }
+        ]);
+    }
+
     const clearYLA = function() {
         table_seen.data = {}
         table_seen.save()
         logger('Cleared!')
-        alert('Cleared YLA DATA!')
+        showAlert('Cleared YLA DATA!')
     }
 
     const addSeen = function(name) {
@@ -307,20 +394,20 @@
 
     const findNearestMessageNode = function(targetY, chat) {
         if (!chat || !view.document) return null;
-        
+
         const chatRect = chat.getBoundingClientRect();
         const messages = Array.from(chat.querySelectorAll('yt-live-chat-text-message-renderer, yt-live-chat-paid-message-renderer'));
-        
+
         if (messages.length === 0) return null;
-        
+
         let nearestNode = null;
         let minDistance = Infinity;
-        
+
         messages.forEach(function(node) {
             const nodeRect = node.getBoundingClientRect();
             const nodeTop = nodeRect.top - chatRect.top;
             const nodeBottom = nodeRect.bottom - chatRect.top;
-            
+
             // Check distance to bottom of message (we want divider after the message)
             const distToBottom = Math.abs(targetY - nodeBottom);
             if (distToBottom < minDistance) {
@@ -328,13 +415,13 @@
                 nearestNode = node;
             }
         });
-        
+
         return nearestNode;
     }
 
     const updateMessageOpacity = function() {
         if (!chatDivider || !view.document) return;
-        
+
         let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
         if (!chat) return;
 
@@ -344,13 +431,13 @@
 
         chat.querySelectorAll('yt-live-chat-text-message-renderer, yt-live-chat-paid-message-renderer').forEach(function(node) {
             ensureMessageId(node); // Ensure all messages have IDs
-            
+
             const nodeRect = node.getBoundingClientRect();
             const nodeTop = nodeRect.top - chatRect.top;
             const nodeBottom = nodeRect.bottom - chatRect.top;
-            
+
             node.classList.remove('yla-message-above-divider', 'yla-message-below-divider');
-            
+
             // If message overlaps or is above divider, it's above
             if (nodeBottom <= dividerTop + 5) {
                 node.classList.add('yla-message-above-divider');
@@ -367,7 +454,7 @@
 
         chatDivider = view.document.createElement('div');
         chatDivider.setAttribute('id', 'yla-chat-divider');
-        
+
         // Position divider at bottom initially - track the last message
         const messages = Array.from(chat.querySelectorAll('yt-live-chat-text-message-renderer, yt-live-chat-paid-message-renderer'));
         if (messages.length > 0) {
@@ -379,7 +466,7 @@
             // No messages, set to null (will position at bottom)
             dividerAfterNodeId = null;
         }
-        
+
         // Make chat container relative positioned if not already
         const chatContainer = chat.parentElement;
         if (chatContainer) {
@@ -388,16 +475,16 @@
                 chatContainer.style.position = 'relative';
             }
         }
-        
+
         chat.appendChild(chatDivider);
-        
+
         // Set initial position
         updateDividerPosition();
-        
+
         // Add drag handlers
         let startY = 0;
         let startDividerTop = 0;
-        
+
         chatDivider.addEventListener('mousedown', function(e) {
             isDragging = true;
             startY = e.clientY;
@@ -407,22 +494,22 @@
             e.preventDefault();
             e.stopPropagation();
         });
-        
+
         const win = view.iframe ? view.document.defaultView : window;
-        
+
         const mouseMoveHandler = function(e) {
             if (!isDragging || !chatDivider) return;
-            
+
             let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
             if (!chat) return;
-            
+
             const chatRect = chat.getBoundingClientRect();
             const deltaY = e.clientY - startY;
             const newTop = startDividerTop + deltaY;
-            
+
             // Find nearest message node and snap to it
             const nearestNode = findNearestMessageNode(newTop, chat);
-            
+
             if (nearestNode) {
                 const nodeId = ensureMessageId(nearestNode);
                 dividerAfterNodeId = nodeId;
@@ -430,7 +517,7 @@
                 updateDividerPosition(true);
             }
         };
-        
+
         const mouseUpHandler = function() {
             if (isDragging) {
                 isDragging = false;
@@ -438,17 +525,17 @@
                 updateMessageOpacity();
             }
         };
-        
+
         win.addEventListener('mousemove', mouseMoveHandler);
         win.addEventListener('mouseup', mouseUpHandler);
-        
+
         // Store handlers for cleanup if needed
         chatDivider._mouseMoveHandler = mouseMoveHandler;
         chatDivider._mouseUpHandler = mouseUpHandler;
-        
+
         // Create bottom button
         createDividerBottomButton();
-        
+
         updateMessageOpacity();
     }
 
@@ -462,28 +549,28 @@
         dividerBottomButton.setAttribute('id', 'yla-divider-bottom-button');
         dividerBottomButton.setAttribute('aria-label', 'Move divider to bottom');
         dividerBottomButton.setAttribute('title', 'Move divider to bottom');
-        
+
         dividerBottomButton.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             moveDividerToBottom();
         });
-        
+
         view.document.body.appendChild(dividerBottomButton);
     }
 
     let dividerUpdateTimeout = null;
     const updateDividerPosition = function(immediate = false) {
         if (!chatDivider) return;
-        
+
         const updatePosition = function() {
             let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
             if (!chat) return;
-            
+
             // Use requestAnimationFrame to ensure DOM is updated
             requestAnimationFrame(function() {
                 const chatRect = chat.getBoundingClientRect();
-                
+
                 // Check if yla-message element exists
                 const ylaMessage = chat.querySelector('#yla-message');
                 let ylaMessageTop = null;
@@ -491,17 +578,17 @@
                     const ylaMessageRect = ylaMessage.getBoundingClientRect();
                     ylaMessageTop = ylaMessageRect.top - chatRect.top;
                 }
-                
+
                 if (dividerAfterNodeId === null) {
                     // Position at bottom - but make sure it's not after yla-message
                     const chatHeight = chat.scrollHeight || chatRect.height;
                     let bottomPosition = chatHeight - 10;
-                    
+
                     // If yla-message exists and is near the bottom, position divider before it
                     if (ylaMessageTop !== null && ylaMessageTop < bottomPosition) {
                         bottomPosition = ylaMessageTop - 5;
                     }
-                    
+
                     chatDivider.style.top = bottomPosition + 'px';
                 } else {
                     // Find the node we should be after
@@ -510,35 +597,35 @@
                         const nodeRect = targetNode.getBoundingClientRect();
                         const nodeBottom = nodeRect.bottom - chatRect.top;
                         let dividerTop = nodeBottom;
-                        
+
                         // If yla-message exists and is after our target node, position divider before yla-message
                         if (ylaMessageTop !== null && ylaMessageTop > nodeBottom) {
                             dividerTop = ylaMessageTop - 5;
                         }
-                        
+
                         chatDivider.style.top = dividerTop + 'px';
                     } else {
                         // Node not found, move to bottom
                         dividerAfterNodeId = null;
                         const chatHeight = chat.scrollHeight || chatRect.height;
                         let bottomPosition = chatHeight - 10;
-                        
+
                         // If yla-message exists and is near the bottom, position divider before it
                         if (ylaMessageTop !== null && ylaMessageTop < bottomPosition) {
                             bottomPosition = ylaMessageTop - 5;
                         }
-                        
+
                         chatDivider.style.top = bottomPosition + 'px';
                     }
                 }
-                
+
                 // Only update opacity if not dragging (to avoid performance issues during drag)
                 if (!isDragging) {
                     updateMessageOpacity();
                 }
             });
         };
-        
+
         // If immediate (during dragging), update right away without debouncing
         if (immediate) {
             if (dividerUpdateTimeout) {
@@ -577,10 +664,10 @@
 
     const checkAndRestoreDivider = function() {
         if (!dividerEnabled) return; // Don't restore if divider is disabled
-        
+
         let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
         if (!chat) return;
-        
+
         // Check if divider exists and is in the DOM
         const existingDivider = chat.querySelector('#yla-chat-divider');
         if (!existingDivider || !chatDivider || !chat.contains(chatDivider)) {
@@ -589,7 +676,7 @@
             createDivider(chat);
             moveDividerToTop();
         }
-        
+
         // Check if button exists
         const existingButton = view.document.querySelector('#yla-divider-bottom-button');
         if (!existingButton || !dividerBottomButton || !view.document.body.contains(dividerBottomButton)) {
@@ -630,7 +717,7 @@
                 }
 
                 // Only process actual chat message renderers
-                if (node.tagName !== 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER' && 
+                if (node.tagName !== 'YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER' &&
                     node.tagName !== 'YT-LIVE-CHAT-PAID-MESSAGE-RENDERER') {
                     return;
                 }
@@ -644,18 +731,18 @@
                 const chatInfo = decipherChat(node);
 
                 processObject(chatInfo);
-                
+
                 // Ensure new message has an ID
                 if (chatInfo.node) {
                     ensureMessageId(chatInfo.node);
                 }
-                
+
                 // Update message opacity and divider position after new message is added
                 if (chatDivider && dividerEnabled) {
                     setTimeout(function() {
                         // Check if divider still exists
                         checkAndRestoreDivider();
-                        
+
                         // Only update position if divider is at bottom (tracking no specific node)
                         // Otherwise, it should stay after the tracked node, so just update opacity
                         if (dividerAfterNodeId === null) {
@@ -680,6 +767,74 @@
     let customMenu = null
     let menuButton = null
 
+    const toggleAll = function() {
+        // Check if at least one toggle is on
+        const hasAnyOn = running || translate || dividerEnabled;
+        
+        if (hasAnyOn) {
+            // Turn all off
+            running = false;
+            translate = false;
+            dividerEnabled = false;
+            
+            // Hide divider and button
+            if (chatDivider) {
+                chatDivider.style.display = 'none';
+            }
+            if (dividerBottomButton) {
+                dividerBottomButton.style.display = 'none';
+            }
+            
+            // Remove translations
+            view.document.querySelectorAll('span.nc-tl').forEach(function(node) {
+                node.remove();
+            });
+        } else {
+            // Turn all on
+            running = true;
+            translate = true;
+            dividerEnabled = true;
+            
+            // Show/create divider
+            let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer');
+            if (chat) {
+                createDivider(chat);
+                // Process existing messages for seen tracking
+                chat.querySelectorAll('yt-live-chat-text-message-renderer').forEach(function(node) {
+                    const chatInfo = decipherChat(node);
+                    processObject(chatInfo);
+                });
+                // Process existing messages for translations
+                chat.querySelectorAll('yt-live-chat-text-message-renderer').forEach(function(node) {
+                    if (isElementInViewport(node)) {
+                        const chatInfo = decipherChat(node);
+                        processObject(chatInfo);
+                    }
+                });
+            }
+            if (dividerBottomButton) {
+                dividerBottomButton.style.display = 'block';
+            } else {
+                createDividerBottomButton();
+            }
+        }
+        
+        // Update status displays
+        if (customMenu) {
+            if (customMenu.querySelector('#yla-seen-status')) {
+                customMenu.querySelector('#yla-seen-status').textContent = running ? 'ON' : 'OFF';
+            }
+            if (customMenu.querySelector('#yla-translate-status')) {
+                customMenu.querySelector('#yla-translate-status').textContent = translate ? 'ON' : 'OFF';
+            }
+            if (customMenu.querySelector('#yla-divider-status')) {
+                customMenu.querySelector('#yla-divider-status').textContent = dividerEnabled ? 'ON' : 'OFF';
+            }
+        }
+        
+        updateButtonIndicator();
+    }
+
     const createCustomMenu = function() {
         // Create menu container
         customMenu = view.document.createElement('div')
@@ -695,6 +850,7 @@
         seenLabel.textContent = 'Seen Tracking'
         let seenStatus = view.document.createElement('span')
         seenStatus.setAttribute('id', 'yla-seen-status')
+        seenStatus.className = 'yla-status-indicator'
         seenStatus.textContent = running ? 'ON' : 'OFF'
         seenItem.appendChild(seenLabel)
         seenItem.appendChild(seenStatus)
@@ -729,6 +885,7 @@
         translateLabel.textContent = 'Translations'
         let translateStatus = view.document.createElement('span')
         translateStatus.setAttribute('id', 'yla-translate-status')
+        translateStatus.className = 'yla-status-indicator'
         translateStatus.textContent = translate ? 'ON' : 'OFF'
         translateItem.appendChild(translateLabel)
         translateItem.appendChild(translateStatus)
@@ -769,13 +926,14 @@
         dividerLabel.textContent = 'Divider'
         let dividerStatus = view.document.createElement('span')
         dividerStatus.setAttribute('id', 'yla-divider-status')
+        dividerStatus.className = 'yla-status-indicator'
         dividerStatus.textContent = dividerEnabled ? 'ON' : 'OFF'
         dividerItem.appendChild(dividerLabel)
         dividerItem.appendChild(dividerStatus)
         dividerItem.addEventListener('click', function(ev) {
             dividerEnabled = !dividerEnabled
             dividerItem.querySelector('#yla-divider-status').textContent = dividerEnabled ? 'ON' : 'OFF'
-            
+
             // Show/hide divider and button
             if (dividerEnabled) {
                 let chat = view.document.querySelector('#items.style-scope.yt-live-chat-item-list-renderer')
@@ -795,7 +953,7 @@
                     dividerBottomButton.style.display = 'none'
                 }
             }
-            
+
             updateButtonIndicator()
             hideMenu()
         })
@@ -803,6 +961,22 @@
             this.style.backgroundColor = '#3f3f3f'
         })
         dividerItem.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'transparent'
+        })
+
+        // Create "Toggle All" menu item
+        let toggleAllItem = view.document.createElement('div')
+        toggleAllItem.setAttribute('id', 'yla-menu-toggle-all')
+        toggleAllItem.style.cssText = 'padding: 12px 16px; cursor: pointer; color: #fff; font-weight: 500;'
+        toggleAllItem.textContent = 'Toggle All'
+        toggleAllItem.addEventListener('click', function(ev) {
+            toggleAll();
+            hideMenu();
+        })
+        toggleAllItem.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#3f3f3f'
+        })
+        toggleAllItem.addEventListener('mouseleave', function() {
             this.style.backgroundColor = 'transparent'
         })
 
@@ -836,11 +1010,11 @@
         clearSeenItem.style.cssText = 'padding: 12px 16px; cursor: pointer; color: #fff;'
         clearSeenItem.textContent = 'Clear Seen Data'
         clearSeenItem.addEventListener('click', function(ev) {
-            if (confirm('Clear all seen data?')) {
+            showConfirm('Clear all seen data?', 'Clear Seen Data', function() {
                 clearYLA();
                 updateButtonIndicator()
                 hideMenu()
-            }
+            });
         })
         clearSeenItem.addEventListener('mouseenter', function() {
             this.style.backgroundColor = '#3f3f3f'
@@ -857,9 +1031,9 @@
         showNamesItem.addEventListener('click', function(ev) {
             let names = Object.keys(table_seen.data);
             if (names.length > 0) {
-                alert(names.join("\r\n"));
+                showAlert(names.join("\r\n"), 'Seen Names');
             } else {
-                alert('No seen names yet.');
+                showAlert('No seen names yet.', 'Seen Names');
             }
             hideMenu()
         })
@@ -873,6 +1047,7 @@
         customMenu.appendChild(seenItem)
         customMenu.appendChild(translateItem)
         customMenu.appendChild(dividerItem)
+        customMenu.appendChild(toggleAllItem)
         customMenu.appendChild(separator)
         customMenu.appendChild(moveDividerItem)
         customMenu.appendChild(separator2)
@@ -1013,6 +1188,13 @@
                 // Add click handler to show menu
                 button.addEventListener('click', function(ev) {
                     ev.stopPropagation()
+                    
+                    // Ctrl+Click triggers toggle all
+                    if (ev.ctrlKey || ev.metaKey) {
+                        toggleAll();
+                        return;
+                    }
+                    
                     if (customMenu && customMenu.style.display === 'block') {
                         hideMenu()
                     } else {
@@ -1058,7 +1240,7 @@
                     // Create divider if enabled
                     if (dividerEnabled) {
                         createDivider(chat);
-                        
+
                         // Periodically check if divider is missing and restore it
                         setInterval(function() {
                             if (dividerEnabled) {
@@ -1066,7 +1248,7 @@
                             }
                         }, 2000); // Check every 2 seconds
                     }
-                    
+
                     // Watch for chat height changes to update divider position
                     let resizeObserverTimeout = null;
                     const resizeObserver = new ResizeObserver(function() {
@@ -1074,7 +1256,7 @@
                         if (resizeObserverTimeout) {
                             clearTimeout(resizeObserverTimeout);
                         }
-                        
+
                         resizeObserverTimeout = setTimeout(function() {
                             if (chatDivider) {
                                 // Always update position - it will stick after the tracked node or at bottom
@@ -1088,7 +1270,7 @@
                     chat.querySelectorAll('yt-live-chat-text-message-renderer, yt-live-chat-paid-message-renderer').forEach(function(node) {
                         // Ensure all messages have IDs
                         ensureMessageId(node);
-                        
+
                         // Only process messages that are currently visible
                         if (isElementInViewport(node)) {
                             // get chat info
